@@ -10,7 +10,7 @@ const carCtx = carCanvas.getContext('2d')
 const networkCtx = networkCanvas.getContext('2d')
 const road = new Road(carCanvas.width / 2, carCanvas.width * 0.9)
 
-const N = 200
+const N = 400
 const cars = generateCars(N)
 const genMutation = 0.15
 const traffic = [
@@ -45,7 +45,7 @@ animate()
 function generateCars(N) {
   const cars = []
   for (i = 0; i < N; i++) {
-    cars.push(new Car(road.getLaneCenter(1), 300, 30, 50, 'AI', 4, i))
+    cars.push(new Car(road.getLaneCenter(1), 300, 30, 50, 'AI', 3, i))
   }
   return cars
 }
@@ -70,7 +70,7 @@ function animate(time) {
 
   bestCar = cars.find((car) => car.y === Math.min(...cars.map((car) => car.y)))
   const bestCarDisplay = document.getElementById('currentCar')
-  bestCarDisplay.innerHTML = `Current best car: ${bestCar.id}`
+  bestCarDisplay.innerHTML = `${bestCar.id}`
 
   carCanvas.height = window.innerHeight
   networkCanvas.height = window.innerHeight
