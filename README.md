@@ -2,7 +2,7 @@
 
 ## Self-driving cars with NN, full vanilla JS/HTML/CSS.
 
-## Project based on the tutorial of [sentdex](https://www.youtube.com/watch?v=Rs_rAxEsAvI&ab_channel=freeCodeCamp.org)
+### Project based on this tutorial from [freeCodeCamp](https://www.youtube.com/watch?v=Rs_rAxEsAvI&ab_channel=freeCodeCamp.org)
 
 ## TODOs
 
