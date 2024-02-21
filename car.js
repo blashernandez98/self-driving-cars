@@ -26,6 +26,12 @@ class Car {
       this.#move()
       this.polygon = this.#createPolygon()
       this.damaged = this.#assessDamage(roadBorders, traffic)
+      this.points = 0
+      for (let i = 0; i < traffic.length; i++) {
+        if (this.y < traffic[i].y) {
+          this.points += 1
+        }
+      }
     }
     if (this.sensors) {
       this.sensors.update(roadBorders, traffic)
@@ -83,7 +89,7 @@ class Car {
   draw(ctx, color, showSensors = false) {
     ctx.fillStyle = color
     if (this.damaged) {
-      ctx.fillStyle = 'grey'
+      ctx.fillStyle = 'red'
     }
 
     ctx.beginPath()
