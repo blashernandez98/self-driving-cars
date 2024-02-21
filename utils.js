@@ -37,3 +37,7 @@ function polyIntersect(poly1, poly2) {
   }
   return false
 }
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
