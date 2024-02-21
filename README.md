@@ -6,7 +6,7 @@
 
 ## TODOs
 
-- Add random traffic generator
-- Change fitness function to number of cars passed
-- Experiment with other genetic algorithms
-- Implement reinforcement learning
+- Add random traffic generator 🔲
+- Change fitness function to number of cars passed ☑️
+- Experiment with other genetic algorithms 🔲
+- Implement reinforcement learning 🔲
