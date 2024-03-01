@@ -8,8 +8,17 @@ const carCtx = carCanvas.getContext('2d')
 const networkCtx = networkCanvas.getContext('2d')
 const road = new Road(carCanvas.width / 2, carCanvas.width * 0.9)
 
+const bestCarDisplay = document.getElementById('currentCar')
+const aliveCarsDisplay = document.getElementById('carsAlive')
+const generationDisplay = document.getElementById('generation')
+const recordDisplay = document.getElementById('record')
+const pointsDisplay = document.getElementById('points')
+
+carCanvas.height = window.innerHeight
+networkCanvas.height = window.innerHeight
+
 let N = 300
-let genMutation = 0.01
+let genMutation = 0.3
 let aiTopSpeed = 3
 let traffic, cars, bestCar, stopId
 let count = 0
@@ -17,14 +26,21 @@ let startTime = null
 let timeAtStop = 0
 let maxTime = 200000
 let paused = false
-let currentBest = 12
+let currentBest = 3
 
 start(true)
+
+function createTraffic() {
+  return
+}
 
 function reset() {
   cars = generateCars(N)
   //cars = [new Car(road.getLaneCenter(1), 300, 30, 50, 'KEYS', aiTopSpeed, 0)]
   traffic = [
+    new Car(road.getLaneCenter(0), 500, 30, 50, 'DUMMY', 2.5),
+    new Car(road.getLaneCenter(1), 500, 30, 50, 'DUMMY', 2.5),
+    new Car(road.getLaneCenter(2), 500, 30, 50, 'DUMMY', 2.5),
     new Car(road.getLaneCenter(1), 100, 30, 50, 'DUMMY', 2),
     new Car(road.getLaneCenter(0), -100, 30, 50, 'DUMMY', 2),
     new Car(road.getLaneCenter(1), -200, 30, 50, 'DUMMY', 2),
@@ -39,12 +55,22 @@ function reset() {
     new Car(road.getLaneCenter(2), -900, 30, 50, 'DUMMY', 2),
     new Car(road.getLaneCenter(1), -1000, 30, 50, 'DUMMY', 2),
     new Car(road.getLaneCenter(1), -1100, 30, 50, 'DUMMY', 2),
+    new Car(road.getLaneCenter(1), -1200, 30, 50, 'DUMMY', 2),
+    new Car(road.getLaneCenter(0), -1300, 30, 50, 'DUMMY', 2),
+    new Car(road.getLaneCenter(2), -1400, 30, 50, 'DUMMY', 2),
+    new Car(road.getLaneCenter(0), -1400, 30, 50, 'DUMMY', 2),
+    new Car(road.getLaneCenter(1), -1560, 30, 50, 'DUMMY', 2),
+    new Car(road.getLaneCenter(0), -1560, 30, 50, 'DUMMY', 2),
+    new Car(road.getLaneCenter(2), -1700, 30, 50, 'DUMMY', 2),
   ]
   // Set current best brain to all cars and mutate it
   if (localStorage.getItem('bestBrain')) {
     for (let i = 0; i < cars.length; i++) {
       cars[i].brain = JSON.parse(localStorage.getItem('bestBrain'))
-      if (i !== 0) {
+      if (i < 50) {
+        NeuralNetwork.mutate(cars[i].brain, genMutation / 10)
+      }
+      if (i >= 50) {
         NeuralNetwork.mutate(cars[i].brain, genMutation)
       }
     }
@@ -63,11 +89,7 @@ function generateCars(N) {
 
 function save() {
   if (bestCar.points <= currentBest) {
-    console.log(
-      `Generation ${count++} No improvement. Record:${
-        bestCar.points
-      } Current Best:${currentBest}`
-    )
+    count++
     return
   }
   currentBest = bestCar.points
@@ -87,15 +109,13 @@ function discard() {
   localStorage.removeItem('bestCar')
 }
 
-function removeDeadCars() {
+function updateCars() {
   carsToDelete = []
   for (let i = 0; i < cars.length; i++) {
-    if (
-      cars[i].id !== 0 &&
-      ((bestCar.y > cars[i].y + 100 && bestCar.points > cars[i].points) ||
-        bestCar.y < cars[i].y - 70 ||
-        cars[i].damaged)
-    ) {
+    let isStalker = bestCar.points - 4 > cars[i].points
+    let isDamaged = cars[i].damaged
+
+    if (isDamaged || isStalker || cars[i].y < bestCar) {
       carsToDelete.push(i)
     }
     cars[i].update(road.borders, traffic)
@@ -110,7 +130,7 @@ function animate(timeStep) {
     startTime = timeStep
   }
   const progress = timeStep - startTime
-  if (progress > maxTime || (cars.length === 1 && bestCar.damaged)) {
+  if (progress > maxTime || cars.length === 0) {
     save()
     start()
     startTime = timeStep
@@ -122,31 +142,24 @@ function animate(timeStep) {
     traffic[i].update(road.borders, [])
   }
 
-  removeDeadCars()
+  updateCars()
 
   bestPossibleCar = cars.find(
     (car) => car.y === Math.min(...cars.map((car) => car.y))
   )
-  if (bestPossibleCar && bestPossibleCar.points > bestCar.points) {
+  if (bestPossibleCar && bestPossibleCar.points >= bestCar.points) {
     bestCar = bestPossibleCar
   }
-  const bestCarDisplay = document.getElementById('currentCar')
-  bestCarDisplay.innerHTML = `Car N°${bestCar.id}`
-  const aliveCarsDisplay = document.getElementById('carsAlive')
-  aliveCarsDisplay.innerHTML = `${cars.length}`
-  const generationDisplay = document.getElementById('generation')
-  generationDisplay.innerHTML = `${count}`
-  const recordDisplay = document.getElementById('record')
-  recordDisplay.innerHTML = `${currentBest}`
 
-  carCanvas.height = window.innerHeight
-  networkCanvas.height = window.innerHeight
+  updateDisplays()
+  clearCanvases()
 
   carCtx.save()
   carCtx.translate(0, -bestCar.y + carCanvas.height * 0.8)
   road.draw(carCtx)
   for (let i = 0; i < traffic.length; i++) {
-    traffic[i].draw(carCtx, 'red')
+    // Draw car with its index inside
+    traffic[i].draw(carCtx, 'red', i)
   }
   carCtx.globalAlpha = 0.2
   for (let i = 0; i < cars.length; i++) {
@@ -185,4 +198,17 @@ function pause() {
     cancelAnimationFrame(stopId)
   }
   paused = !paused
+}
+
+function updateDisplays() {
+  bestCarDisplay.innerHTML = `N°${bestCar.id}`
+  aliveCarsDisplay.innerHTML = `${cars.length}`
+  generationDisplay.innerHTML = `${count}`
+  recordDisplay.innerHTML = `${currentBest}`
+  pointsDisplay.innerHTML = `${bestCar.points}`
+}
+
+function clearCanvases() {
+  carCtx.clearRect(0, 0, carCanvas.width, carCanvas.height)
+  networkCtx.clearRect(0, 0, networkCanvas.width, networkCanvas.height)
 }
